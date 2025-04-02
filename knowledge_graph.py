@@ -21,8 +21,61 @@ I have attached some images (without solution, but with the direct ownership int
 
 Let me know if there is anything that requires further explanation :-)
 """
+from __future__ import annotations
+from dataclasses import dataclass
 
-class KnowledgeGraph:
-    def __init__(self, company_name, ownership_structure):
-        self.company_name = company_name
-        self.ownership_structure = ownership_structure
+@dataclass
+class EntityId:
+    value: int
+
+@dataclass
+class EntityName:
+    value: str
+
+
+@dataclass
+class Entity:
+    id: EntityId
+    name: EntityName
+
+@dataclass
+class Ratio:
+    value: float
+
+    def to_percentage_str(self) -> str:
+        return f"{self.value:.1%}"
+
+@dataclass
+class Share:
+    entity: Entity
+    ratio: Ratio
+
+
+@dataclass
+class OwnershipShare:
+    owner: Entity
+    ownee: Entity
+    share: Ratio
+
+
+class KnowledgeGraphSparseDictImpl:
+    def __init__(self) -> None:
+        __owner_with_shares_dict: dict[EntityId, list[Share]]  = {}
+    
+    
+    
+    @classmethod
+    def create_from(cls, ownership_shares: list[OwnershipShare]) -> KnowledgeGraphSparseDictImpl:
+        graph = KnowledgeGraphSparseDictImpl()
+        
+        # Placeholder for operations on kg - needs proper implementation
+        # Example: adding ownership shares into the dictionary
+        for ownership_share in ownership_shares:
+            if ownership_share.owner.id not in graph.__owner_with_shares_dict:
+                graph.__owner_with_shares_dict[ownership_share.owner.id] = []
+            graph.__owner_with_shares_dict[ownership_share.owner.id].append(
+                Share(entity=ownership_share.ownee, ratio=ownership_share.share)
+            )
+        
+        return graph
+        
