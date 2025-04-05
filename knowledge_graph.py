@@ -22,60 +22,33 @@ I have attached some images (without solution, but with the direct ownership int
 Let me know if there is anything that requires further explanation :-)
 """
 from __future__ import annotations
-from dataclasses import dataclass
 
-@dataclass
-class EntityId:
-    value: int
-
-@dataclass
-class EntityName:
-    value: str
-
-
-@dataclass
-class Entity:
-    id: EntityId
-    name: EntityName
-
-@dataclass
-class Ratio:
-    value: float
-
-    def to_percentage_str(self) -> str:
-        return f"{self.value:.1%}"
-
-@dataclass
-class Share:
-    entity: Entity
-    ratio: Ratio
-
-
-@dataclass
-class OwnershipShare:
-    owner: Entity
-    ownee: Entity
-    share: Ratio
+from entity_id import EntityId
+from share import Share
 
 
 class KnowledgeGraphSparseDictImpl:
     def __init__(self) -> None:
         __owner_with_shares_dict: dict[EntityId, list[Share]]  = {}
     
-    
-    
+    def compute_real_shares(self):
+        # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
+        raise NotImplementedError("TODO: Impl computation of indirect shares.")
+
     @classmethod
-    def create_from(cls, ownership_shares: list[OwnershipShare]) -> KnowledgeGraphSparseDictImpl:
+    def create_from(cls, shares: list[Share]) -> KnowledgeGraphSparseDictImpl:
         graph = KnowledgeGraphSparseDictImpl()
-        
+
+        # TODO: Ask about how to interpret inactive edges. You don't show them in your image
+        shares = Share.filter_to_active_shares(shares)
+
         # Placeholder for operations on kg - needs proper implementation
         # Example: adding ownership shares into the dictionary
-        for ownership_share in ownership_shares:
-            if ownership_share.owner.id not in graph.__owner_with_shares_dict:
-                graph.__owner_with_shares_dict[ownership_share.owner.id] = []
-            graph.__owner_with_shares_dict[ownership_share.owner.id].append(
-                Share(entity=ownership_share.ownee, ratio=ownership_share.share)
-            )
-        
+        for share in shares:
+            if share.owner.id not in graph.__owner_with_shares_dict:
+                graph.__owner_with_shares_dict[share.owner.id] = []
+
+            graph.__owner_with_shares_dict[share.owner.id].append(
+                Share(entity=share.ownee, ratio=share.share))
+
         return graph
-        

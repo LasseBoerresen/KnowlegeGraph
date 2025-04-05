@@ -1,39 +1,44 @@
 import json
+from pathlib import Path
 from pprint import pprint
 
 from knowledge_graph import KnowledgeGraphSparseDictImpl
-from owernership_share_edge_dto import OwnershipShareEdgeDto
+from share import Share
+from share_dto import ShareDto
 
 
 def main():
-    filepath = 'data/CasaAS.json'
-    edges = load_ownership_share_edges(filepath)
+    filepath = Path('data/ResightsApS.json')
+    shares = read_shares_from(filepath)
 
-    KnowledgeGraphSparseDictImpl.create_from()
+    pprint(shares)
 
+    # kg = KnowledgeGraphSparseDictImpl.create_from(shares)
+    # kg.compute_real_shares()
 
-def load_ownership_share_edges(filepath) -> list[OwnershipShareEdgeDto]:
-    edges = load_ownership_share_edges_from_file(filepath)
-
-    # TODO: Ask about how to interpret inactive edges. You don't show them in your image
-    active_edges = [edge for edge in edges if edge.active is True]
-
-    throw_for_duplicated_ownership_shares(active_edges)
-
-    return active_edges
+    # TODO: be careful when calculating mean share.. Could be different than just  min+max/2,
+    #  but maybe all averages should be aggregated.
 
 
-def throw_for_duplicated_ownership_shares(active_edges) -> None:
-    if len(set(active_edge.id for active_edge in active_edges)) != len(active_edges):
-        raise Exception('There are multiple active edges with the same id')
+def read_shares_from(filepath: Path) -> list[Share]:
+    share_dtos = read_share_dtos_from(filepath)
+    throw_for_duplicated_ownership_shares(share_dtos)
+
+    return [dto.to_domain() for dto in share_dtos]
 
 
-def load_ownership_share_edges_from_file(filepath) -> list[OwnershipShareEdgeDto]:
-    with open(filepath, 'r') as f:
-        edges_as_dict = json.load(f)
+def throw_for_duplicated_ownership_shares(shares: [ShareDto]) -> None:
+    if len(set(share.id for share in shares)) != len(shares):
+        raise Exception('There are multiple shares with the same id')
 
-    edges = [OwnershipShareEdgeDto(**edge_dict) for edge_dict in edges_as_dict]
-    return edges
+
+def read_share_dtos_from(filepath) -> list[ShareDto]:
+    return [ShareDto(**sd) for sd in read_share_dtos_as_dicts_from(filepath)]
+
+
+def read_share_dtos_as_dicts_from(filepath) -> list[dict]:
+    with open(filepath, 'r', encoding="UTF-8") as f:
+        return json.load(f)
 
 
 if __name__ == "__main__":
