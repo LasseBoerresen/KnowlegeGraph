@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from pprint import pprint
 
-from knowledge_graph import KnowledgeGraphSparseDictImpl
+from share_graph import ShareGraphSparseDictImpl
 from share import Share
 from share_dto import ShareDto
 
@@ -13,7 +13,7 @@ def main():
 
     pprint(shares)
 
-    # kg = KnowledgeGraphSparseDictImpl.create_from(shares)
+    kg = ShareGraphSparseDictImpl.create_from(shares)
     # kg.compute_real_shares()
 
     # TODO: be careful when calculating mean share.. Could be different than just  min+max/2,

@@ -27,17 +27,17 @@ from entity_id import EntityId
 from share import Share
 
 
-class KnowledgeGraphSparseDictImpl:
+class ShareGraphSparseDictImpl:
     def __init__(self) -> None:
-        __owner_with_shares_dict: dict[EntityId, list[Share]]  = {}
+        __shares_dict: dict[EntityId, list[Share]]  = {}
     
     def compute_real_shares(self):
         # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
         raise NotImplementedError("TODO: Impl computation of indirect shares.")
 
     @classmethod
-    def create_from(cls, shares: list[Share]) -> KnowledgeGraphSparseDictImpl:
-        graph = KnowledgeGraphSparseDictImpl()
+    def create_from(cls, shares: list[Share]) -> ShareGraphSparseDictImpl:
+        graph = ShareGraphSparseDictImpl()
 
         # TODO: Ask about how to interpret inactive edges. You don't show them in your image
         shares = Share.filter_to_active_shares(shares)
