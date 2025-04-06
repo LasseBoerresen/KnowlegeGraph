@@ -37,31 +37,52 @@ class ShareGraphSparseDictImpl:
         # TODO:
 
     def real_share_amounts_for(self, source: Entity, focus: Entity) -> ShareAmount:
-        return self.__real_share_amounts_for(source, focus, self.create_visits_dict())
+        return self.__real_share_amounts_for(source, focus, visits={})
 
     def __real_share_amounts_for(self, source: Entity, focus: Entity, visits: dict[Entity, int]) -> ShareAmount:
-        visits[source] += 1
+        self.visit(source, visits)
 
-        if (source, focus) in self.__source_real_share_amount_cache:
-            return self.__source_real_share_amount_cache[(source, focus)]
+        if visits[source] > 1:
+            # Ignore contributions from
+            return ShareAmount.from_exact(0.0)
 
-        real_share_amount =  self.__real_share_amount_uncached(focus, source, visits)
-
-        self.__source_real_share_amount_cache[(source, focus)] = real_share_amount
-
-        return real_share_amount
-
-    def __real_share_amount_uncached(self, focus, source, visits: dict[Entity, int]):
         # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
         if source == focus:
             return ShareAmount.from_exact(1.0)
 
         # Note: Recursive calls
         real_share_amounts = [
-            share.amount * self.real_share_amounts_for(share.target, focus)
+            share.amount * self.__real_share_amounts_for(share.target, focus, visits)
             for share in (self.__source_with_shares_dict[source])]
 
         return sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
+
+    def visit(self, source, visits):
+        visits[source] = visits[source] + 1 if source in visits else 1
+
+    # def __real_share_amounts_for(self, source: Entity, focus: Entity, visits: dict[Entity, int]) -> ShareAmount:
+    #     visits[source] += 1
+    #
+    #     if (source, focus) in self.__source_real_share_amount_cache:
+    #         return self.__source_real_share_amount_cache[(source, focus)]
+    #
+    #     real_share_amount =  self.__real_share_amount_uncached(focus, source, visits)
+    #
+    #     self.__source_real_share_amount_cache[(source, focus)] = real_share_amount
+    #
+    #     return real_share_amount
+    #
+    # def __real_share_amount_uncached(self, focus, source, visits: dict[Entity, int]):
+    #     # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
+    #     if source == focus:
+    #         return ShareAmount.from_exact(1.0)
+    #
+    #     # Note: Recursive calls
+    #     real_share_amounts = [
+    #         share.amount * self.real_share_amounts_for(share.target, focus)
+    #         for share in (self.__source_with_shares_dict[source])]
+    #
+    #     return sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
 
     def compute_real_shares_in(self, focus: Entity) -> dict[Entity, ShareAmount]:
         # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
@@ -69,9 +90,6 @@ class ShareGraphSparseDictImpl:
         return {
             source: self.real_share_amounts_for(source, focus)
             for source in self.__source_with_shares_dict.keys()}
-
-    def create_visits_dict(self):
-        return {source: 0 for source, shares in self.__source_with_shares_dict.items()}
 
     def add_shares(self, shares) -> None:
         for share in shares:
