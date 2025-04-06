@@ -18,3 +18,18 @@ class RatioRange:
         return RatioRange(
             lower=Ratio.from_pct(lower),
             upper=Ratio.from_pct(upper))
+
+    @classmethod
+    def from_exact(cls, value: float):
+        return RatioRange(
+            lower=Ratio(value),
+            upper=Ratio(value))
+
+    def __add__(self, other: RatioRange) -> RatioRange:
+        return RatioRange(self.lower + other.lower, self.upper + other.upper)
+
+    def __mul__(self, other: RatioRange) -> RatioRange:
+        return RatioRange(self.lower * other.lower, self.upper * other.upper)
+
+    def __repr__(self):
+        return f"({self.lower}, {self.upper})"

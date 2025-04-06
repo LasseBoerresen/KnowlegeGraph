@@ -23,17 +23,58 @@ Let me know if there is anything that requires further explanation :-)
 """
 from __future__ import annotations
 
+from entity import Entity
 from entity_id import EntityId
 from share import Share
+from share_amount import ShareAmount
 
 
 class ShareGraphSparseDictImpl:
     def __init__(self) -> None:
-        __shares_dict: dict[EntityId, list[Share]]  = {}
-    
-    def compute_real_shares(self):
+        self.__source_with_shares_dict: dict[Entity, list[Share]] = {}
+        self.__source_real_share_amount_cache: dict[(Entity, Entity), ShareAmount] = {}
+
+        # TODO keep dict of already computed real shares. Think dynamic programming. We look here first.
+        # TODO:
+
+    def real_share_amounts_for(self, source: Entity, focus: Entity) -> ShareAmount:
+        if (source, focus) in self.__source_real_share_amount_cache:
+            return self.__source_real_share_amount_cache[(source, focus)]
+
+        # Handle when source is the entity in focus, then we would never stop. I.g. when the source
+        if source == focus:
+            return ShareAmount.from_exact(1.0)
+
+        source_shares = self.__source_with_shares_dict[source]
+
+        # Note: Recursive calls
+        real_share_amounts = [
+            share.amount * self.real_share_amounts_for(share.target, focus)
+            for share in source_shares]
+
+        total_real_share_amount = sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
+
+        self.__source_real_share_amount_cache[(source, focus)] = total_real_share_amount
+
+        return total_real_share_amount
+
+    def compute_real_shares_in(self, focus: Entity) -> dict[Entity, ShareAmount]:
         # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
-        raise NotImplementedError("TODO: Impl computation of indirect shares.")
+        # TODO: Maybe detect circular shares if target is lower depth than source
+        return {
+            source: self.real_share_amounts_for(source, focus)
+            for source in self.__source_with_shares_dict.keys()}
+
+
+    def add_shares(self, shares) -> None:
+        for share in shares:
+            self.add_share(share)
+
+    def add_share(self, share) -> None:
+        if share.source not in self.__source_with_shares_dict:
+            self.__source_with_shares_dict[share.source] = []
+
+        self.__source_with_shares_dict[share.source].append(share)
 
     @classmethod
     def create_from(cls, shares: list[Share]) -> ShareGraphSparseDictImpl:
@@ -42,13 +83,6 @@ class ShareGraphSparseDictImpl:
         # TODO: Ask about how to interpret inactive edges. You don't show them in your image
         shares = Share.filter_to_active_shares(shares)
 
-        # Placeholder for operations on kg - needs proper implementation
-        # Example: adding ownership shares into the dictionary
-        for share in shares:
-            if share.owner.id not in graph.__owner_with_shares_dict:
-                graph.__owner_with_shares_dict[share.owner.id] = []
-
-            graph.__owner_with_shares_dict[share.owner.id].append(
-                Share(entity=share.ownee, ratio=share.share))
+        graph.add_shares(shares)
 
         return graph

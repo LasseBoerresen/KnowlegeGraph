@@ -10,3 +10,6 @@ from entity_name import EntityName
 class Entity:
     id: EntityId
     name: EntityName
+
+    def __repr__(self):
+        return f"{self.name}"

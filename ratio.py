@@ -13,3 +13,13 @@ class Ratio:
     @classmethod
     def from_pct(cls, pct: float) -> Ratio:
         return Ratio(pct / 100.0)
+
+    def __add__(self, other: Ratio) -> Ratio:
+        return Ratio(self.value + other.value)
+
+    def __mul__(self, other: Ratio) -> Ratio:
+        return Ratio(self.value * other.value)
+
+    def __repr__(self):
+        return f"{self.value}"
+
