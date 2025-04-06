@@ -37,16 +37,21 @@ class ShareGraphSparseDictImpl:
         # TODO:
 
     def real_share_amounts_for(self, source: Entity, focus: Entity) -> ShareAmount:
+        return self.__real_share_amounts_for(source, focus, self.create_visits_dict())
+
+    def __real_share_amounts_for(self, source: Entity, focus: Entity, visits: dict[Entity, int]) -> ShareAmount:
+        visits[source] += 1
+
         if (source, focus) in self.__source_real_share_amount_cache:
             return self.__source_real_share_amount_cache[(source, focus)]
 
-        real_share_amount =  self.real_share_amount_uncached(focus, source)
+        real_share_amount =  self.__real_share_amount_uncached(focus, source, visits)
 
         self.__source_real_share_amount_cache[(source, focus)] = real_share_amount
 
         return real_share_amount
 
-    def real_share_amount_uncached(self, focus, source):
+    def __real_share_amount_uncached(self, focus, source, visits: dict[Entity, int]):
         # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
         if source == focus:
             return ShareAmount.from_exact(1.0)
@@ -65,6 +70,8 @@ class ShareGraphSparseDictImpl:
             source: self.real_share_amounts_for(source, focus)
             for source in self.__source_with_shares_dict.keys()}
 
+    def create_visits_dict(self):
+        return {source: 0 for source, shares in self.__source_with_shares_dict.items()}
 
     def add_shares(self, shares) -> None:
         for share in shares:
