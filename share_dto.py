@@ -1,6 +1,8 @@
 ﻿import re
 from typing import Optional
 from pydantic import BaseModel
+
+from depth import Depth
 from entity_id import EntityId
 from entity_name import EntityName
 from entity import Entity
@@ -26,9 +28,11 @@ class ShareDto(BaseModel):
     def to_domain(self) -> Share:
         return Share(
             source=Entity(EntityId(self.source), EntityName(self.source_name)),
+            source_depth=Depth(self.source_depth),
             target=Entity(EntityId(self.target), EntityName(self.target_name)),
             amount=self.__share_amount_to_domain(),
-            active=self.active)
+            active=self.active,
+            target_depth=Depth(self.target_depth))
 
     def __share_amount_to_domain(self) -> ShareAmount:
         if "-" in self.share:

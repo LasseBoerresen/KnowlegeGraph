@@ -43,7 +43,7 @@ class ShareGraphSparseDictImpl:
         self.visit(source, visits)
 
         if visits[source] > 1:
-            # Ignore contributions from
+            # Ignore contributions from circular paths.
             return ShareAmount.from_exact(0.0)
 
         # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
