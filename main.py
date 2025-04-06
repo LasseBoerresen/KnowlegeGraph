@@ -10,7 +10,7 @@ from share_dto import ShareDto
 
 
 def main():
-    filepath = Path('data/ResightsApS.json')
+    filepath = Path('data/CasaAS.json')
     shares = read_shares_from(filepath)
 
     focus_entity = read_focus_entity_from(filepath)
@@ -33,7 +33,7 @@ def read_shares_from(filepath: Path) -> list[Share]:
     share_dtos = read_share_dtos_from(filepath)
     throw_for_duplicated_ownership_shares(share_dtos)
 
-    return [dto.to_domain() for dto in share_dtos]
+    return [dto.to_domain() for dto in share_dtos if dto.target_depth >= 0]
 
 
 def throw_for_duplicated_ownership_shares(shares: [ShareDto]) -> None:
