@@ -16,7 +16,7 @@ class SharesFileReader:
         share_dtos = reader.__read_share_dtos()
         reader.__throw_for_duplicated_ownership_shares(share_dtos)
 
-        return [dto.to_domain() for dto in share_dtos if dto.target_depth >= 0]
+        return [dto.to_domain() for dto in share_dtos]
 
     @classmethod
     def read_focus_entity_from(cls, filepath: Path) -> Entity:

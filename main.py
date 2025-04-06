@@ -10,7 +10,7 @@ def main():
     focus_entity = SharesFileReader.read_focus_entity_from(filepath)
 
     sg = ShareGraphSparseDictImpl.create_from(shares)
-    real_shares_dict = sg.compute_real_shares_in(focus_entity)
+    real_shares_dict = sg.real_shares_amounts_in(focus_entity)
 
     for source, real_share in real_shares_dict.items():
         print(f"{real_share}: {source}")
