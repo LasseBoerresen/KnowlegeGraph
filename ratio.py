@@ -23,3 +23,6 @@ class Ratio:
     def __str__(self):
         return f"{self.value:.3f}"
 
+    def is_fraction(self):
+        return 0 <= self.value <= 1
+

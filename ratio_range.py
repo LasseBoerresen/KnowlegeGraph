@@ -25,6 +25,9 @@ class RatioRange:
             lower=Ratio(value),
             upper=Ratio(value))
 
+    def is_fraction(self) -> bool:
+        return self.lower.is_fraction() and  self.upper.is_fraction()
+
     def __add__(self, other: RatioRange) -> RatioRange:
         return RatioRange(self.lower + other.lower, self.upper + other.upper)
 
