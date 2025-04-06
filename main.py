@@ -22,7 +22,8 @@ def main():
     sg = ShareGraphSparseDictImpl.create_from(shares)
     real_shares_dict = sg.compute_real_shares_in(focus_entity)
 
-    pprint(real_shares_dict)
+    for source, real_share in real_shares_dict.items():
+        print(f"{real_share}: {source}")
 
     # TODO: be careful when calculating mean share.. Could be different than just  min+max/2,
     #  but maybe all averages should be aggregated.
