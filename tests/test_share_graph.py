@@ -118,12 +118,12 @@ class TestShareGraph:
             entity_queried: Entity,
             entity_in_focus: Entity,
             expected_real_share_amount: ShareAmount):
+
         # Given
         graph = ShareGraphSparseDictImpl.create_from(shares)
 
         # When
-        actual_real_share_amount = graph.real_share_amount_for(
-            query=entity_queried, focus=entity_in_focus)
+        actual_real_share_amount = graph.real_share_amount_for(query=entity_queried, focus=entity_in_focus)
 
         # Then
         assert actual_real_share_amount == expected_real_share_amount
