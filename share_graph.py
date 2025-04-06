@@ -24,7 +24,6 @@ Let me know if there is anything that requires further explanation :-)
 from __future__ import annotations
 
 from entity import Entity
-from entity_id import EntityId
 from share import Share
 from share_amount import ShareAmount
 
@@ -41,22 +40,23 @@ class ShareGraphSparseDictImpl:
         if (source, focus) in self.__source_real_share_amount_cache:
             return self.__source_real_share_amount_cache[(source, focus)]
 
-        # Handle when source is the entity in focus, then we would never stop. I.g. when the source
+        real_share_amount =  self.real_share_amount_uncached(focus, source)
+
+        self.__source_real_share_amount_cache[(source, focus)] = real_share_amount
+
+        return real_share_amount
+
+    def real_share_amount_uncached(self, focus, source):
+        # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
         if source == focus:
             return ShareAmount.from_exact(1.0)
-
-        source_shares = self.__source_with_shares_dict[source]
 
         # Note: Recursive calls
         real_share_amounts = [
             share.amount * self.real_share_amounts_for(share.target, focus)
-            for share in source_shares]
+            for share in (self.__source_with_shares_dict[source])]
 
-        total_real_share_amount = sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
-
-        self.__source_real_share_amount_cache[(source, focus)] = total_real_share_amount
-
-        return total_real_share_amount
+        return sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
 
     def compute_real_shares_in(self, focus: Entity) -> dict[Entity, ShareAmount]:
         # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
