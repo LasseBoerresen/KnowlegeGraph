@@ -95,8 +95,8 @@ class TestShareGraph:
                 entity_in_focus=e0,
                 expected_real_share_amount=ShareAmount.from_exact(0.50)),
 
-            # Given: single negative_depth target with 0.5 shares
-            # Then:  0.5
+            # Given: two negative_depth target with 0.5 shares
+            # Then:  0.25
             TestInput(
                 shares=[
                     Share(source=e0, source_depth=Depth(0), target=e_1, target_depth=Depth(-1), amount=ShareAmount.from_exact(0.5), active=True),
