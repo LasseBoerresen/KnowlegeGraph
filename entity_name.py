@@ -7,5 +7,5 @@ from dataclasses import dataclass
 class EntityName:
     value: str
 
-    def __repr__(self):
+    def __str__(self):
         return f"'{self.value}'"

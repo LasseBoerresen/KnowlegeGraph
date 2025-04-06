@@ -31,5 +31,5 @@ class RatioRange:
     def __mul__(self, other: RatioRange) -> RatioRange:
         return RatioRange(self.lower * other.lower, self.upper * other.upper)
 
-    def __repr__(self):
+    def __str__(self):
         return f"({self.lower}, {self.upper})"

@@ -20,6 +20,6 @@ class Ratio:
     def __mul__(self, other: Ratio) -> Ratio:
         return Ratio(self.value * other.value)
 
-    def __repr__(self):
-        return f"{self.value}"
+    def __str__(self):
+        return f"{self.value:.3f}"
 
