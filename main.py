@@ -16,7 +16,7 @@ def main():
     focus_entity = read_focus_entity_from(filepath)
     pprint(focus_entity)
 
-    pprint(shares)
+    # pprint(shares)
 
 
     sg = ShareGraphSparseDictImpl.create_from(shares)
