@@ -23,7 +23,7 @@ Let me know if there is anything that requires further explanation :-)
 """
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Optional
 
 from depth import Depth
 from entity import Entity
@@ -33,36 +33,40 @@ from share_amount import ShareAmount
 
 class ShareGraphSparseDictImpl:
     def __init__(self) -> None:
-        ## TODO actually use the cache
+        self.__focus: Optional[Entity] = None
         self.__entity_real_share_amount_cache: dict[(Entity, Entity), ShareAmount] = {}
         self.__entity_with_depth_dict: dict[Entity, Depth] = {}
         self.__source_with_shares_dict: dict[Entity, list[Share]] = {}
         self.__target_with_shares_dict: dict[Entity, list[Share]] = {}
 
-    def real_shares_amounts_in(self, focus: Entity) -> dict[Entity, ShareAmount]:
-        # TODO Do montecarlo simulation of simple circular calculation to determine if the true ownership changes over iterations.
+    def real_share_amounts(self) -> dict[Entity, ShareAmount]:
         return {
-            source: self.real_share_amount_for(source, focus)
+            source: self.real_share_amount_for(source)
             for source in self.__entity_with_depth_dict.keys()}
 
+    def real_share_amount_for(self, query: Entity) -> ShareAmount:
+        return self.__real_share_amount_for(query, visits={}).throw_if_not_faction()
 
-    def real_share_amount_for(self, query: Entity, focus: Entity) -> ShareAmount:
-        return self.__real_share_amount_for(query, focus, visits={})
+    def __real_share_amount_for(self, query: Entity, visits: dict[Entity, int]) -> ShareAmount:
+        if query in self.__entity_real_share_amount_cache:
+            return self.__entity_real_share_amount_cache[query]
 
-    def __real_share_amount_for(self, query: Entity, focus: Entity, visits: dict[Entity, int]) -> ShareAmount:
+        real_share_amount =  self.__real_share_amount_uncached(query, visits)
+
+        return real_share_amount
+
+    def __real_share_amount_uncached(self, query: Entity, visits: dict[Entity, int]) -> ShareAmount:
         self.visit(query, visits)
 
-        if visits[query] > 1: # 10
-            raise Exception(f"Cycle detected at source: {query}")
-            # return ShareAmount.from_exact(1.0)
+        if visits[query] > 1:
+            return ShareAmount.from_exact(0.0)
 
-        if query == focus:
+        if query == self.focus:
             return ShareAmount.from_exact(1.0)
 
-        return self.__real_share_amount_multi_directional(query, focus, visits)
+        return self.__real_share_amount_multi_directional_for(query, visits)
 
-
-    def __real_share_amount_multi_directional(self, query, focus, visits) -> ShareAmount:
+    def __real_share_amount_multi_directional_for(self, query, visits) -> ShareAmount:
         query_depth = self.__entity_with_depth_dict[query].value
         if query_depth >= 0:
             shares = self.__source_with_shares_dict[query]
@@ -71,19 +75,27 @@ class ShareGraphSparseDictImpl:
             shares = self.__target_with_shares_dict[query]
             query_selector = lambda share: share.source
 
-        return self.__calculate_real_share_amount_for(shares, query_selector, focus, visits.copy())
+        real_share_amount = self.__calculate_real_share_amount_for(shares, query_selector, visits.copy())
+
+        if self.__should_cache(real_share_amount):
+            self.__entity_real_share_amount_cache[query] = real_share_amount
+
+        return real_share_amount
+
+    @staticmethod
+    def __should_cache(real_share_amount) -> bool:
+        return real_share_amount.value.upper.value > 0.0
 
     def __calculate_real_share_amount_for(
             self,
             shares: list[Share],
             query_selector: Callable[[Share], Entity],
-            focus: Entity,
             visits: dict[Entity, int]) -> ShareAmount:
 
         # Note: Recursive calls
         # Note: Each branching path maintains a different visitor dict. Circularity is per path
         real_share_amounts = [
-            share.amount * self.__real_share_amount_for(query_selector(share), focus, visits.copy())
+            share.amount * self.__real_share_amount_for(query_selector(share), visits.copy())
             for share in shares]
 
         return sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
@@ -92,35 +104,19 @@ class ShareGraphSparseDictImpl:
     def visit(source, visits):
         visits[source] = visits[source] + 1 if source in visits else 1
 
-    # def __real_share_amounts_for(self, source: Entity, focus: Entity, visits: dict[Entity, int]) -> ShareAmount:
-    #     visits[source] += 1
-    #
-    #     if (source, focus) in self.__source_real_share_amount_cache:
-    #         return self.__source_real_share_amount_cache[(source, focus)]
-    #
-    #     real_share_amount =  self.__real_share_amount_uncached(focus, source, visits)
-    #
-    #     self.__source_real_share_amount_cache[(source, focus)] = real_share_amount
-    #
-    #     return real_share_amount
-    #
-    # def __real_share_amount_uncached(self, focus, source, visits: dict[Entity, int]):
-    #     # Handle when source is the entity in focus, then we would never stop. I.e. when the source is upstream
-    #     if source == focus:
-    #         return ShareAmount.from_exact(1.0)
-    #
-    #     # Note: Recursive calls
-    #     real_share_amounts = [
-    #         share.amount * self.real_share_amounts_for(share.target, focus)
-    #         for share in (self.__source_with_shares_dict[source])]
-    #
-    #     return sum(real_share_amounts, start=ShareAmount.from_exact(0.0))
-
-    def add_shares(self, shares) -> None:
+    def __add_shares(self, shares) -> None:
         for share in shares:
-            self.add_share(share)
+            self.__add_share(share)
 
-    def add_share(self, share) -> None:
+        self.__set_focus()
+
+    def __set_focus(self):
+        self.focus = next(
+            key
+            for key, depth in self.__entity_with_depth_dict.items()
+            if depth.value == 0)
+
+    def __add_share(self, share) -> None:
         self.__add_entities_for(share)
 
         self.__add_source_for(share)
@@ -139,16 +135,23 @@ class ShareGraphSparseDictImpl:
         self.__target_with_shares_dict[share.target].append(share)
 
     def __add_entities_for(self, share):
-        self.__entity_with_depth_dict[share.source] = share.source_depth
-        self.__entity_with_depth_dict[share.target] = share.target_depth
+        self.add_entity(share.source, share.source_depth)
+        self.add_entity(share.target, share.target_depth)
+
+    def add_entity(self, entity, entity_depth):
+        if self.should_add_entity_depth(entity, entity_depth):
+            self.__entity_with_depth_dict[entity] = entity_depth
+
+    def should_add_entity_depth(self, entity, entity_depth):
+        return (entity not in self.__entity_with_depth_dict
+                or abs(entity_depth.value) < self.__entity_with_depth_dict[entity].value)
 
     @classmethod
     def create_from(cls, shares: list[Share]) -> ShareGraphSparseDictImpl:
         graph = ShareGraphSparseDictImpl()
 
-        # TODO: Ask about how to interpret inactive edges. You don't show them in your image
         shares = Share.filter_to_active_shares(shares)
 
-        graph.add_shares(shares)
+        graph.__add_shares(shares)
 
         return graph
