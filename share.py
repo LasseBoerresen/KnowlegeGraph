@@ -14,7 +14,7 @@ class Share:
     target: Entity
     target_depth: Depth
     amount: ShareAmount
-    active: bool
+    active: bool = True
 
     @staticmethod
     def filter_to_active_shares(shares: list[Share]) -> list[Share]:
