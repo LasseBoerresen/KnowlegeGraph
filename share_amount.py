@@ -27,3 +27,8 @@ class ShareAmount:
 
     def __str__(self):
         return f"{self.value}"
+
+    def to_percentage_str(self) -> str:
+        return (f"low: {self.value.lower.value*100:3.0f}%  "
+                f"mid: {self.value.average().value*100:3.0f}%  "
+                f"high: {self.value.upper.value*100:3.0f}%")

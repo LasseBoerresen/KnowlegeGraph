@@ -1,4 +1,7 @@
-﻿import re
+﻿from __future__ import annotations
+
+import json
+import re
 from typing import Optional
 from pydantic import BaseModel
 
@@ -6,6 +9,7 @@ from depth import Depth
 from entity_id import EntityId
 from entity_name import EntityName
 from entity import Entity
+from ratio import Ratio
 from share import Share
 from ratio_range import RatioRange
 from share_amount import ShareAmount
@@ -33,6 +37,34 @@ class ShareDto(BaseModel):
             amount=self.__share_amount_to_domain(),
             active=self.active,
             target_depth=Depth(self.target_depth))
+
+    def to_json(self) -> dict:
+        return self.model_dump()
+
+    def with_real_share_amount_from(self, entity_and_real_share_amounts_dict: dict[Entity, ShareAmount]) -> ShareDto:
+        if not self.active:
+            return self.model_copy()
+
+        real_share_amount = entity_and_real_share_amounts_dict[self.__get_queried_entity()]
+
+        return self.model_copy(update={
+            "real_lower_share": self.__pct_str_from(real_share_amount.value.lower),
+            "real_average_share": self.__pct_str_from(real_share_amount.value.average()),
+            "real_upper_share": self.__pct_str_from(real_share_amount.value.upper)})
+
+    def __get_queried_entity(self):
+        if self.target_depth >= 0:
+            query_entity = self.to_domain().source
+        else:
+            query_entity = self.to_domain().target
+        return query_entity
+
+    @staticmethod
+    def __pct_str_from(ratio: Ratio) -> str:
+        if ratio < Ratio(0.05):
+            return "<5%"
+
+        return f"{ratio.to_percentage_str()}%"
 
     def __share_amount_to_domain(self) -> ShareAmount:
         if "-" in self.share:

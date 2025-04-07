@@ -1,22 +1,20 @@
 from pathlib import Path
-
 from share_graph import ShareGraphSparseDictImpl
 from shares_file_reader import SharesFileReader
 
 
 def main():
-    filepath = Path('data/CasaAS.json')
-    shares = SharesFileReader.read_shares_from(filepath)
+    filepath = Path('data/ResightsApS.json')
+    share_dtos = SharesFileReader.read_shares_from(filepath)
 
+    shares = [dto.to_domain() for dto in share_dtos]
     share_graph = ShareGraphSparseDictImpl.create_from(shares)
-    real_share_amounts_dict = share_graph.real_share_amounts()
+    entity_and_real_share_amount_dict = share_graph.real_share_amounts()
 
-    for source, real_share in real_share_amounts_dict.items():
-        print(f"{real_share}: {source}")
+    for source, real_share in entity_and_real_share_amount_dict.items():
+        print(f"{real_share.to_percentage_str()}: {source}")
 
-    # TODO: be careful when calculating mean share.. Could be different than just  min+max/2,
-    #  but maybe all averages should be aggregated.
-
+    SharesFileReader.write_real_shares_to(filepath, entity_and_real_share_amount_dict)
 
 if __name__ == "__main__":
     main()
