@@ -9,10 +9,11 @@ from ratio_range import RatioRange
 class ShareAmount:
     value: RatioRange
 
-    def __post_init__(self):
+    def throw_if_not_faction(self) -> ShareAmount:
         if not self.value.is_fraction():
             raise ValueError(f"{ShareAmount.__name__} values must be between {0:.1f} and {1:.1f} inclusive, got: {self.value}")
 
+        return self
 
     @classmethod
     def from_exact(cls, value: float):
@@ -26,5 +27,3 @@ class ShareAmount:
 
     def __str__(self):
         return f"{self.value}"
-
-
