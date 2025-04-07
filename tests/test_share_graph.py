@@ -7,6 +7,7 @@ from depth import Depth
 from entity import Entity
 from entity_id import EntityId
 from entity_name import EntityName
+from ratio_range import RatioRange
 from share import Share
 from share_amount import ShareAmount
 from share_graph import ShareGraph
@@ -37,22 +38,22 @@ class TestShareGraph:
     @pytest.mark.parametrize(
         "shares, entity_queried, expected_real_share_amount",
         [
-            # Single 1.0 share
-            # Then: 1.0
+            # Given: Single 1.0 share
+            # Then: returns that share directly as 1.0
             TestInput(
                 shares=[Share(source=e1, source_depth=Depth(1), target=e0, target_depth=Depth(0), amount=ShareAmount.from_exact(1.0))],
                 entity_queried=e1,
                 expected_real_share_amount=ShareAmount.from_exact(1.0)),
 
             # Given: Single 0.5 share
-            # Then:  0.5
+            # Then:  return that share directly as 0.5
             TestInput(
                 shares=[Share(source=e1, source_depth=Depth(1), target=e0, target_depth=Depth(0), amount=ShareAmount.from_exact(0.5))],
                 entity_queried=e1,
                 expected_real_share_amount=ShareAmount.from_exact(0.5)),
 
             # Given: two 0.5 shares in serial
-            # Then:  0.25
+            # Then:  then compounds both two to 0.25
             TestInput(
                 shares=[
                     Share(source=e2, source_depth=Depth(2), target=e1, target_depth=Depth(1), amount=ShareAmount.from_exact(0.5)),
@@ -61,7 +62,7 @@ class TestShareGraph:
                 expected_real_share_amount=ShareAmount.from_exact(0.25)),
 
             # Given: three 0.5 shares in serial
-            # Then:  0.125
+            # Then:  compounds all 3 to 0.125
             TestInput(
                 shares=[
                     Share(source=e3, source_depth=Depth(3), target=e2, target_depth=Depth(2), amount=ShareAmount.from_exact(0.5)),
@@ -69,6 +70,15 @@ class TestShareGraph:
                     Share(source=e1, source_depth=Depth(1), target=e0, target_depth=Depth(0), amount=ShareAmount.from_exact(0.5))],
                 entity_queried=e3,
                 expected_real_share_amount=ShareAmount.from_exact(0.125)),
+
+            # Given two serial share amounts with ranges
+            # Then:  returns lower compounded with lower, and upper compounded with upper.
+            TestInput(
+                shares=[
+                    Share(source=e2, source_depth=Depth(2), target=e1, target_depth=Depth(1), amount=ShareAmount.from_range(0.5,1.0)),
+                    Share(source=e1, source_depth=Depth(1), target=e0, target_depth=Depth(0), amount=ShareAmount.from_range(0.5, 1.0))],
+                entity_queried=e2,
+                expected_real_share_amount=ShareAmount.from_range(0.25, 1.0)),
 
             # Given: three 0.5 shares, 1 direct and 2 in series to focus
             # Then:  0.75
@@ -141,8 +151,7 @@ class TestShareGraph:
 
 
             # TODO test that lower and upper bounds are calculated correctly.
-            # TODO test calculations of average.. through a complicated graph.
-            # TODO test other share values than 0.5.
+
 
         ])
     def test_given_shares_and_focus_and_queried_entity__when_get_real_share__then_returns_expected(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-
+from ratio import Ratio
 from ratio_range import RatioRange
 
 
@@ -16,8 +16,12 @@ class ShareAmount:
         return self
 
     @classmethod
-    def from_exact(cls, value: float):
+    def from_exact(cls, value: float) -> ShareAmount:
         return ShareAmount(RatioRange.from_exact(value))
+
+    @classmethod
+    def from_range(cls, lower: float, upper: float) -> ShareAmount:
+        return ShareAmount(RatioRange(Ratio(lower), Ratio(upper)))
 
     def __add__(self, other: ShareAmount) -> ShareAmount:
         return ShareAmount(self.value + other.value)
