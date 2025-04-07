@@ -147,12 +147,6 @@ class TestShareGraph:
                     Share(source=e_2, source_depth=Depth(-3), target=e_2, target_depth=Depth(-1), amount=ShareAmount.from_exact(0.1))],
                 entity_queried=e_2,
                 expected_real_share_amount=ShareAmount.from_exact(0.25)),
-
-
-
-            # TODO test that lower and upper bounds are calculated correctly.
-
-
         ])
     def test_given_shares_and_focus_and_queried_entity__when_get_real_share__then_returns_expected(
             self,
@@ -168,7 +162,6 @@ class TestShareGraph:
 
         # Then
         assert actual_real_share_amount == expected_real_share_amount
-
 
 
 if __name__ == '__main__':
