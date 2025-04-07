@@ -31,7 +31,7 @@ from share import Share
 from share_amount import ShareAmount
 
 
-class ShareGraphSparseDictImpl:
+class ShareGraph:
     def __init__(self) -> None:
         self.__focus: Optional[Entity] = None
         self.__entity_real_share_amount_cache: dict[(Entity, Entity), ShareAmount] = {}
@@ -147,8 +147,8 @@ class ShareGraphSparseDictImpl:
                 or abs(entity_depth.value) < self.__entity_with_depth_dict[entity].value)
 
     @classmethod
-    def create_from(cls, shares: list[Share]) -> ShareGraphSparseDictImpl:
-        graph = ShareGraphSparseDictImpl()
+    def create_from(cls, shares: list[Share]) -> ShareGraph:
+        graph = ShareGraph()
 
         shares = Share.filter_to_active_shares(shares)
 

@@ -9,7 +9,7 @@ from entity_id import EntityId
 from entity_name import EntityName
 from share import Share
 from share_amount import ShareAmount
-from share_graph import ShareGraphSparseDictImpl
+from share_graph import ShareGraph
 
 
 from typing import NamedTuple
@@ -152,7 +152,7 @@ class TestShareGraph:
             expected_real_share_amount: ShareAmount):
 
         # Given
-        graph = ShareGraphSparseDictImpl.create_from(shares)
+        graph = ShareGraph.create_from(shares)
 
         # When
         actual_real_share_amount = graph.real_share_amount_for(query=entity_queried)
